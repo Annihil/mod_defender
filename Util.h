@@ -6,6 +6,7 @@
 #include <cctype>
 #include <locale>
 #include <iostream>
+#include <vector>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
