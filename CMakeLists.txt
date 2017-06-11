@@ -3,15 +3,12 @@ project(mod_defender)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-include_directories(deps/
-        /usr/include/apache2
-        /usr/include/apr-1.0
-        /usr/include/apr-1
-        /usr/include
-        /usr/local/include/apr-1/
-        /usr/local/include/
-        /usr/local/include/apache24
-        /usr/home/vlt-sys/Engine/include/)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
+
+find_package(Apache)
+find_package(Apr)
+
+include_directories(deps ${APACHE_INC} ${APR_INC})
 
 set(CMAKE_CXX_STANDARD 11)
 
