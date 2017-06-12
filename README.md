@@ -12,6 +12,11 @@ It uses the same configs format and is thus fully compatible with [NXAPI/NXTOOL]
     - [Learning log](https://github.com/nbs-system/naxsi/wiki/naxsilogs#naxsi_fmt)
     - [Extensive learning log](https://github.com/nbs-system/naxsi/wiki/naxsilogs#naxsi_exlog)
 
+## Advantages
+  - Human readable log: colored output to watch Mainrules and Basicrules processing
+  - JSON match log: easier parsing and more compact logs
+  - Combined log: regular and extensive match log are mixed so that content and name of variable in question are presents on the same line
+
 ## Required packages
 * apache2 dev package to provide Apache2 headers
 * apr package to provide Apache Portal Runtime library and headers
