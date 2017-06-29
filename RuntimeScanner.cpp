@@ -897,7 +897,9 @@ void RuntimeScanner::writeJSONLearningLog() {
     jsonlog << "\"scores\":{";
     int i = 0;
     for (const auto &match : matchScores) {
-        jsonlog << "\"" << match.first << "\":" << match.second << ",";
+        string scoreName = match.first.substr(1, match.first.length() - 1);
+        transform(scoreName.begin(), scoreName.end(), scoreName.begin(), tolower);
+        jsonlog << "\"" << scoreName << "\":" << match.second << ",";
         i++;
     }
     if (i > 0) jsonlog.seekp(-1, std::ios_base::end);
