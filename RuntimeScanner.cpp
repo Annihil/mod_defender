@@ -38,14 +38,14 @@ void RuntimeScanner::applyRuleMatch(const http_rule_t &rule, unsigned long nbMat
 
     if (rulesMatchedCount > 0)
         matchVars << "&";
-    matchVars << "zone" << rulesMatchedCount << "=" << match_zones[zone] << "&";
+    matchVars << "zone" << rulesMatchedCount << "=" << match_zones[zone] << (targetName ? "|NAME" : "") << "&";
     matchVars << "id" << rulesMatchedCount << "=" << rule.id << "&";
     matchVars << "var_name" << rulesMatchedCount << "=" << name;
 
     if (learningJSONLogFile) {
         if (rulesMatchedCount > 0)
             jsonMatchVars << ",";
-        jsonMatchVars << "{\"zone\":\"" << match_zones[zone] << "\",";
+        jsonMatchVars << "{\"zone\":\"" << match_zones[zone] << (targetName ? "|NAME" : "") << "\",";
         jsonMatchVars << "\"id\":" << rule.id << ",";
         jsonMatchVars << "\"var_name\":\"" << escapeQuotes(name) << "\"";
         if (extensiveLearning)
