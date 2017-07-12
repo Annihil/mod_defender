@@ -13,6 +13,7 @@
 
 #include <map>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -44,6 +45,7 @@ using namespace Util;
 using std::pair;
 using std::make_pair;
 using std::vector;
+using std::set;
 using std::string;
 using std::cerr;
 using std::stringstream;
@@ -90,12 +92,18 @@ enum LOG_LVL {
     LOG_LVL_DEBUG
 };
 
+typedef struct {
+    string zone;
+    set<unsigned long> ruleId;
+    string varname;
+    string content;
+} match_info_t; 
+
 class RuntimeScanner {
     friend class JsonValidator;
 private:
     RuleParser& parser;
     stringstream matchVars;
-    stringstream jsonMatchVars;
     unsigned int rulesMatchedCount = 0;
     string uri;
     vector<pair<string, string>> headers;
@@ -134,6 +142,7 @@ public:
     bool libinjXSS;
 
     unordered_map<string, int> matchScores;
+    unordered_map<string, match_info_t> matchInfos;
 
     bool block = false;
     bool drop = false;

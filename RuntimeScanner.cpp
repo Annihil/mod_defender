@@ -43,17 +43,23 @@ void RuntimeScanner::applyRuleMatch(const http_rule_t &rule, unsigned long nbMat
     matchVars << "var_name" << rulesMatchedCount << "=" << name;
 
     if (learningJSONLogFile) {
-        if (rulesMatchedCount > 0)
-            jsonMatchVars << ",";
-        jsonMatchVars << "{\"zone\":\"" << match_zones[zone] << (targetName ? "|NAME" : "") << "\",";
-        jsonMatchVars << "\"id\":" << rule.id << ",";
-        jsonMatchVars << "\"var_name\":\"" << escapeQuotes(name) << "\"";
-        if (extensiveLearning)
-            jsonMatchVars << ",\"content\":\"" << escapeQuotes(value) << "\"";
-        jsonMatchVars << "}";
+        string fullZone = match_zones[zone];
+        fullZone += (targetName ? "|NAME" : "");
+        string matchInfoKey = name + "#" + fullZone;
+
+        if (matchInfos.find(matchInfoKey) != matchInfos.end()) {
+            matchInfos[matchInfoKey].ruleId.insert(rule.id);
+        } else {
+            matchInfos[matchInfoKey].zone = fullZone;
+            matchInfos[matchInfoKey].ruleId.insert(rule.id);
+            matchInfos[matchInfoKey].varname = name;
+            if (extensiveLearning && !targetName)
+                matchInfos[matchInfoKey].content = value;
+        }
     }
 
-    writeExtensiveLog(rule, zone, name, value, targetName);
+    if (extensiveLearning)
+        writeExtensiveLog(rule, zone, name, value, targetName);
 
     rulesMatchedCount++;
 }
@@ -847,8 +853,6 @@ void RuntimeScanner::writeLearningLog() {
 
 void RuntimeScanner::writeExtensiveLog(const http_rule_t &rule, MATCH_ZONE zone, const string &name,
                                        const string &value, bool targetName) {
-    if (!extensiveLearning)
-        return;
     stringstream extensivelog;
     extensivelog << naxsiTimeFmt() << " ";
     extensivelog << "[error] ";
@@ -886,7 +890,7 @@ void RuntimeScanner::writeJSONLearningLog() {
     stringstream jsonlog;
     std::time_t result = std::time(nullptr);
     std::asctime(std::localtime(&result));
-    jsonlog << "{\"timestamp\":";
+    jsonlog << "{\"time\":";
     jsonlog << result << ",";
 
     jsonlog << "\"ip\":\"" << clientIp << "\",";
@@ -895,17 +899,33 @@ void RuntimeScanner::writeJSONLearningLog() {
 
     jsonlog << "\"block\":" << (block || drop) << ",";
     jsonlog << "\"scores\":{";
-    int i = 0;
     for (const auto &match : matchScores) {
         string scoreName = match.first.substr(1, match.first.length() - 1);
         transform(scoreName.begin(), scoreName.end(), scoreName.begin(), tolower);
         jsonlog << "\"" << scoreName << "\":" << match.second << ",";
-        i++;
     }
-    if (i > 0) jsonlog.seekp(-1, std::ios_base::end);
-    jsonlog << "},";
+    if (matchScores.size() > 0) jsonlog.seekp(-1, std::ios_base::end);
 
-    jsonlog << "\"vars\":[" << jsonMatchVars.str() << "],";
+    jsonlog << "},\"match\":[";
+    for (const auto &matchInfoPair : matchInfos) {
+        const match_info_t &matchInfo = matchInfoPair.second;
+        jsonlog << "{\"zone\":\"" << matchInfo.zone << "\",";
+
+        jsonlog << "\"id\":[";
+        for (const unsigned long &ruleId : matchInfo.ruleId)
+            jsonlog << ruleId << ",";
+        jsonlog.seekp(-1, std::ios_base::end);
+        jsonlog << "]";
+
+        if (!matchInfo.varname.empty())
+            jsonlog << ",\"var_name\":\"" << escapeQuotes(matchInfo.varname) << "\"";
+        if (extensiveLearning && !matchInfo.content.empty())
+            jsonlog << ",\"content\":\"" << escapeQuotes(matchInfo.content) << "\"";
+        jsonlog << "},";
+    }
+    
+    if (matchInfos.size() > 0) jsonlog.seekp(-1, std::ios_base::end);
+    jsonlog << "],";
 
     jsonlog << "\"client\":\"" << clientIp << "\",";
     jsonlog << "\"server\":\"" << serverHostname << "\",";
