@@ -14,7 +14,8 @@
 #include <http_log.h>
 #include <apr_strings.h>
 #include <util_script.h>
-#include "RuntimeScanner.hpp"
+#include <unistd.h>
+#include "deps/libdefiance/RuntimeScanner.hpp"
 
 // Extra Apache 2.4+ C++ module declaration
 #ifdef APLOG_USE_MODULE
@@ -26,8 +27,8 @@ APLOG_USE_MODULE(defender);
  */
 typedef struct {
     RuleParser *parser;
-    vector<pair<string, string>> tmpCheckRules;
-    vector<string> tmpBasicRules;
+    std::vector<std::pair<std::string, std::string>> tmpCheckRules;
+    std::vector<std::string> tmpBasicRules;
     char *loc_path;
     apr_file_t *matchlog_file;
     apr_file_t *jsonmatchlog_file;
@@ -79,7 +80,7 @@ static int post_config(apr_pool_t *pconf, apr_pool_t *, apr_pool_t *, server_rec
         apr_pool_userdata_set((const void *) 1, "defender-init-flag", apr_pool_cleanup_null, s->process->pool);
         tmpMainRules.clear();
     } else { // second (last) load
-        string mainruleErr;
+        std::string mainruleErr;
         unsigned int mainRuleCount = RuleParser::parseMainRules(tmpMainRules, mainruleErr);
         ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s, "Defender active on server %s: %d MainRules loaded",
                      s->server_hostname, mainRuleCount);
@@ -92,9 +93,9 @@ static int post_config(apr_pool_t *pconf, apr_pool_t *, apr_pool_t *, server_rec
                 dcfg->parser = new RuleParser();
                 apr_pool_cleanup_register(pconf, (void *) dcfg->parser, defender_delete_ruleparser_object,
                                           apr_pool_cleanup_null);
-                string checkruleErr;
+                std::string checkruleErr;
                 dcfg->parser->parseCheckRule(dcfg->tmpCheckRules, checkruleErr);
-                string basicruleErr;
+                std::string basicruleErr;
                 unsigned int basicRuleCount = dcfg->parser->parseBasicRules(dcfg->tmpBasicRules, basicruleErr);
                 ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
                              "Defender active%s on loc %s: %lu CheckRules loaded, %d BasicRules loaded",
@@ -176,7 +177,7 @@ static int header_parser(request_rec *r) {
     unsigned int pid_buffer_len = 16;
     char pid_buffer[pid_buffer_len];
     apr_snprintf(pid_buffer, pid_buffer_len, "%pT", &tid);
-    scanner->threadId = string(pid_buffer);
+    scanner->threadId = std::string(pid_buffer);
     scanner->connectionId = r->connection->id;
     scanner->clientIp = r->useragent_ip;
     scanner->requestedHost = r->hostname;
@@ -480,19 +481,19 @@ static const char *set_useenv_flag(cmd_parms *, void *cfg, int flag) {
 }
 
 static const char *set_mainrules(cmd_parms *, void *, const char *line) {
-    tmpMainRules.push_back(string(line));
+    tmpMainRules.push_back(std::string(line));
     return NULL;
 }
 
 static const char *set_checkrules(cmd_parms *, void *cfg, const char *arg1, const char *arg2) {
     dir_config_t *dcfg = (dir_config_t *) cfg;
-    dcfg->tmpCheckRules.push_back(std::make_pair(string(arg1), string(arg2)));
+    dcfg->tmpCheckRules.push_back(std::make_pair(std::string(arg1), std::string(arg2)));
     return NULL;
 }
 
 static const char *set_basicrules(cmd_parms *, void *cfg, const char *line) {
     dir_config_t *dcfg = (dir_config_t *) cfg;
-    dcfg->tmpBasicRules.push_back(string(line));
+    dcfg->tmpBasicRules.push_back(std::string(line));
     return NULL;
 }
 
@@ -524,9 +525,6 @@ static void *create_dir_config(apr_pool_t *p, char *path) {
 
     dir_cfgs.push_back(dcfg);
     dcfg->loc_path = apr_pstrdup(p, path);
-
-    dcfg->requestBodyLimit = 131072;
-    dcfg->learning = 1;
     return dcfg;
 }
 

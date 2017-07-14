@@ -12,8 +12,11 @@ include_directories(deps ${APACHE_INC} ${APR_INC})
 
 set(CMAKE_CXX_STANDARD 11)
 
-file(GLOB SOURCE_FILES *.cpp deps/libinjection/*.c)
+set(SOURCE_FILES mod_defender.cpp)
 add_library(mod_defender SHARED ${SOURCE_FILES})
+
+add_subdirectory(deps/libdefiance)
+target_link_libraries(mod_defender libdefiance)
 
 if (AUTO)
     set(STOP_APACHE_CMD sudo systemctl stop apache2)

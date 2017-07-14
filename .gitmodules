@@ -1,0 +1,3 @@
+[submodule "deps/libdefiance"]
+	path = deps/libdefiance
+	url = https://github.com/DefLab/libdefiance
